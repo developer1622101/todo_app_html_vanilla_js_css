@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head> 
+<body> 
+   
+    <input id="title" placeholder="title"  type="text"/> 
+    <input id="description" placeholder="description" type="text"/> 
+    <button id="add-todo"> Add todo </button>  
+    <div id="todos-container">  
+    </div> 
+
+    <button id="sign_out" onclick="(() => { localStorage.setItem('token', '') ;  
+        location.reload() ;   
+     })()" > Sign Out  </button>
+
+<script>   
+
+// logic to check if anybody has signed in 
+
+const json_token = localStorage.getItem('token') ;  
+
+if(!json_token) {  
+    alert('only signed in users can access this page , you are redirected to sign in'); 
+    window.location.href ='signin.html' ;
+} 
+
+const token  = JSON.parse(json_token) ;  
+
+
+
+
+const title_input = document.getElementById('title') ; 
+const description_input   = document.getElementById('description') ;  
+const add_todo_button = document.getElementById('add-todo') ;   
+const todos_container =  document.getElementById('todos-container') ;  
+
+
+const fetchTodos = async () => {     
+
+    todos_container.innerHTML ='' ; 
+
+    const data = await fetch("http://localhost:8000/user/todo" ,  { method: 'GET' ,   headers: { 
+        'Authorization': `Bearer ${token}` 
+    }  }).then((response)  => response.json() ) ;  
+
+    if(data.success === 'true') {  
+        
+        let todos = data.todos ; 
+
+        todos.map( (todo) => {  
+            console.log(todo) ; 
+             let list_element = document.createElement('li') ;  
+             list_element.id = todo._id ; 
+             list_element.innerHTML = `<h2> Title:  ${todo.title} </h2> <h3> Description: ${todo.description} </h3> 
+               `
+           //  list_element.textContent = "title: " + todo.title +   " description: " + todo.description ;   
+            
+             let  delete_button = document.createElement('button') ; 
+             delete_button.textContent = 'delete' ; 
+             delete_button.addEventListener( 'click' ,  async () => {  let result =    await fetch(`http://localhost:8000/user/todo?id=${todo._id}` , { method: "DELETE" , headers: { 'Authorization': `Bearer ${token}` }  }).then((response) => 
+             response.json()).catch((e) => console.log(e))   ;    
+             await fetchTodos() ; 
+            } )  ;   
+
+            let edit_button = document.createElement('button') ; 
+            edit_button.textContent = 'edit' ; 
+
+            edit_button.addEventListener( 'click' ,  () => {   
+
+                let todoId = list_element.id ; 
+
+                list_element.innerHTML = '' ; 
+                 
+                let title_input = document.createElement('input') ; 
+                let description_input = document.createElement('input') ; 
+                
+                title_input.placeholder = 'title'
+                title_input.type = 'text' ; 
+                description_input.placeholder = 'description' ;
+                description_input.type = 'text' ;
+                
+                let submit_button = document.createElement('button') ; 
+                submit_button.textContent = 'submit' ; 
+
+                submit_button.addEventListener('click' , async () => {  
+                   let result =  await fetch(`http://localhost:8000/user/todo?id=${todoId}` ,  { method: "PUT"  ,  headers: { 'Content-Type':"application/json"  ,  'Authorization':`Bearer ${token}` }  , body:  JSON.stringify( { title: title_input.value , description: description_input.value   })  }) .then( (response) => response.json() ).catch((e) => console.log(e))  ; 
+                   if(result.success ==='true') {  
+                    fetchTodos() ; 
+                   } 
+                 }) 
+                
+                list_element.appendChild(title_input ) ; 
+                list_element.appendChild(description_input) ; 
+                list_element.appendChild(submit_button) ;  
+                
+              } ) ; 
+
+
+             list_element.appendChild(delete_button) ; 
+             list_element.appendChild(edit_button) ; 
+             todos_container.appendChild(list_element) ;  
+        }) 
+    }
+   } 
+
+fetchTodos() ;  
+add_todo_button.addEventListener('click' ,  async () => {   
+
+    console.log(title_input.value ) ; 
+    const response = await fetch(`http://localhost:8000/user/todo` ,   { method: "POST"  ,  headers: { "Content-Type": "application/json" ,  'Authorization': `Bearer ${token}` } , body: JSON.stringify( { title: title_input.value,  description: description_input.value  }) } ).then((data)  => data.json()).catch((e) => {console.log(e)})  ; 
+    console.log(response) ;   
+    if(response.success === 'true') {  
+      await   fetchTodos() ; 
+    }
+}) 
+</script> 
+</body>
+</html>

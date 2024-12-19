@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body> 
+     <h1> Sign  up </h1> 
+     <form id="signupform"> 
+      <label for="username"> Username:  </label> 
+      <input  id="username"  required   />  
+      <br/> 
+      <br/> 
+      <label for="password"  style="width:100px;" > Password: </label> 
+      <input  id="password" required />
+      <br/> 
+      <br/> 
+      <button type="submit"> Submit </button>
+    </form>  
+     <div id="error"> </div> 
+   <br/>
+     <button  onclick="location.href = 'signin.html'"> Sign In  </button>
+    <script>  
+     let form  = document.getElementById('signupform') ; 
+     let username = document.getElementById('username') ; 
+     let password = document.getElementById('password') ;  
+
+     let error_div = document.getElementById('error') ;  
+
+
+    
+     form.addEventListener('submit' ,  async (e) => {   
+ 
+        e.preventDefault() ;    
+
+        error_div.textContent = '' ; 
+
+        let error ; 
+
+        let result = await fetch("http://localhost:8000/auth/signup" , {method:"POST" , headers: { 'Content-Type' :"application/json"} , body: JSON.stringify({ username: username.value ,  password:password.value })}).then( (response) => response.json()).catch((e) =>  {console.log(e) ; error = true }    ) ; 
+ 
+
+
+        if(error ) {  
+            error_div.textContent = 'internal server error' ; 
+            return  ;
+        } 
+
+        error_div.textContent = result.message ; 
+         
+        username.value = '' ;
+        password.value ='' ; 
+
+        return  ; 
+     }) 
+
+
+    </script> 
+
+
+
+</body>
+</html>
